@@ -77,7 +77,7 @@ def parseargs():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'xc:dp:Vh',
                                 ['extract', 'convert=', 'dump', 'port=', 'version', 'help'])
-    except getopt.error, msg:
+    except getopt.error as msg:
         usage(archmod.ERROR, msg)
 
     class Options:
@@ -100,7 +100,7 @@ def parseargs():
             options.mode = archmod.HTTPSERVER
             try:
                 options.port = int(arg)
-            except ValueError, msg:
+            except ValueError as msg:
                 sys.exit('Invalid port number: %s' % msg)
         elif opt in ('-c', '--convert'):
             if options.mode is not None:

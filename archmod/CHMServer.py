@@ -21,22 +21,22 @@
 #
 
 import archmod.CHM
-import BaseHTTPServer
+import http.server
 import mimetypes
 import os.path
-import urlparse, urllib
+import urllib.parse, urllib.request, urllib.parse, urllib.error
 
 class DirectoryTraversalError(Exception):
     pass
 
-class ChmServer(BaseHTTPServer.HTTPServer, object):
+class ChmServer(http.server.HTTPServer, object):
     def __init__(self, basedir, bind_address, port):
         super(ChmServer, self).__init__((bind_address, port), ChmRequestHandler)
         self.basedir = basedir
         self.cache_open = {}
 
 def find_file(f, path):
-    path_parts = map(urllib.unquote, path.split('/')[1:])
+    path_parts = list(map(urllib.parse.unquote, path.split('/')[1:]))
     while True:
         if os.path.isfile(f):
             return f, ''.join('/'+p for p in path_parts)
@@ -67,7 +67,7 @@ def send_file(wfile, filename):
             wfile.write(buf)
             buf = fh.read(4096)
 
-class ChmRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class ChmRequestHandler(http.server.BaseHTTPRequestHandler):
     def ok(self, mimetype):
         self.send_response(200)
         self.send_header('Content-Type', mimetype)
@@ -91,15 +91,15 @@ class ChmRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.ok(get_mimetype(page_path))
                 self.wfile.write(page)
                 return
-        except NameError, e:
+        except NameError as e:
             pass
         self.err(404)
 
     def do_GET(self):
-        url = urlparse.urlparse(self.path)
+        url = urllib.parse.urlparse(self.path)
         try:
             (filename, path) = find_file(self.server.basedir, url.path)
-        except DirectoryTraversalError, e:
+        except DirectoryTraversalError as e:
             return self.err(500)
         if filename and path:
             return self.send_page(filename, path)
